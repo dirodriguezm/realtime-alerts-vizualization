@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -36,13 +36,13 @@ func consume(ch chan ZtfAlert, kafkaBrokers string) {
 			alert := ZtfAlert{}
 			avroSchema, err := parseSchema()
 			if err != nil {
-				fmt.Println(err)
+				slog.Error("Failed to parse schema", "error", err)
 				break
 			}
 
 			err = avro.Unmarshal(avroSchema, msg.Value, &alert)
 			if err != nil {
-				fmt.Println(err)
+				slog.Error("Failed to unmarshal alert", "error", err)
 				break
 			}
 
@@ -51,7 +51,7 @@ func consume(ch chan ZtfAlert, kafkaBrokers string) {
 			// The client will automatically try to recover from all errors.
 			// Timeout is not considered an error because it is raised by
 			// ReadMessage in absence of messages.
-			fmt.Printf("Consumer error: %v (%v)\n", err, msg)
+			slog.Error("Consumer error", "error", err, "message", msg)
 			break
 		}
 

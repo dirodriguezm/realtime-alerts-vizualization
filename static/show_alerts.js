@@ -4,6 +4,13 @@ const pointStyle = {
 	fill: "rgba(255, 0, 0, 0.8)"
 }
 
+// Animation configuration
+const ANIMATION_CONFIG = {
+	maxScaleFactor: 2.0,    // Maximum size multiplier
+	growDuration: 1300,      // Time to reach maximum size in ms
+	shrinkDuration: 700,    // Time to return to normal size in ms
+};
+
 
 var config = {
 	form: false,
@@ -40,13 +47,45 @@ Celestial.add({
 		console.log("Add callback initiated");
 	},
 	redraw: function() {
+		const currentTime = Date.now();
 		dynamicPoints.features.forEach(function(point) {
 			if (Celestial.clip(point.geometry.coordinates)) {
+				updatePointAnimation(point, currentTime);
 				paintPoint(point)
 			}
 		});
 	},
 });
+
+/**
+ * Updates the animation state of a point
+ * @param {Object} point 
+ * @param {number} currentTime 
+ */
+function updatePointAnimation(point, currentTime) {
+	if (!point.properties.animationStart) {
+		point.properties.animationStart = currentTime;
+		point.properties.baseRadius = Math.pow(point.properties.dim, 0.5);
+	}
+
+	const timeSinceStart = currentTime - point.properties.animationStart;
+	const totalAnimationDuration = ANIMATION_CONFIG.growDuration + ANIMATION_CONFIG.shrinkDuration;
+
+	if (timeSinceStart <= ANIMATION_CONFIG.growDuration) {
+		// Growing phase
+		const progress = timeSinceStart / ANIMATION_CONFIG.growDuration;
+		const scaleFactor = 1 + (ANIMATION_CONFIG.maxScaleFactor - 1) * progress;
+		point.properties.currentRadius = point.properties.baseRadius * scaleFactor;
+	} else if (timeSinceStart <= totalAnimationDuration) {
+		// Shrinking phase
+		const shrinkProgress = (timeSinceStart - ANIMATION_CONFIG.growDuration) / ANIMATION_CONFIG.shrinkDuration;
+		const scaleFactor = ANIMATION_CONFIG.maxScaleFactor - ((ANIMATION_CONFIG.maxScaleFactor - 1) * shrinkProgress);
+		point.properties.currentRadius = point.properties.baseRadius * scaleFactor;
+	} else {
+		// Animation complete
+		point.properties.currentRadius = point.properties.baseRadius;
+	}
+}
 
 /**
  * Paints a point in celestial map
@@ -58,9 +97,8 @@ function paintPoint(point) {
 
 	// Object radius in pixels
 	if (point.properties.currentRadius === undefined) {
-		point.properties.currentRadius = Math.pow(point.properties.dim, 0.5)
+		point.properties.currentRadius = point.properties.baseRadius || Math.pow(point.properties.dim, 0.5);
 	}
-	//point.properties.currentRadius = point.properties.currentRadius * 0.9
 	let r = point.properties.currentRadius
 
 	// Draw on canvas

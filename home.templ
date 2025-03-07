@@ -5,7 +5,7 @@ templ head() {
 		<script src="/static/d3.min.js"></script>
 		<script src="/static/d3.geo.projection.min.js"></script>
 		<script src="/static/celestial.min.js"></script>
-		<script src="http://unpkg.com/tone"></script>
+		<script src="/static/tone.min.js"></script>
 		<script src="/static/space_sound.js"></script>
 		<script src="/static/space_ambience.js"></script>
 		<link rel="stylesheet" type="text/css" href="/static/celestial.css"/>
@@ -38,7 +38,6 @@ templ home() {
 		<div id="celestial-map"></div>
 	</div>
 	<div id="celestial-form"></div>
-	<button id="play-button" onclick="playNote()">Play</button>
 	<script id="websocket-script" src="/static/show_alerts.js"></script>
 	@footer()
 }

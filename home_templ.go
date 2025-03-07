@@ -29,7 +29,7 @@ func head() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<head><script src=\"/static/d3.min.js\"></script><script src=\"/static/d3.geo.projection.min.js\"></script><script src=\"/static/celestial.min.js\"></script><script src=\"http://unpkg.com/tone\"></script><script src=\"/static/space_sound.js\"></script><script src=\"/static/space_ambience.js\"></script><link rel=\"stylesheet\" type=\"text/css\" href=\"/static/celestial.css\"><style>\n\t\t\tBody {\n\t\t\t    background-color: black;\n\t\t\t}\n\t\t\t.footer {\n\t\t\t    position: fixed;\n\t\t\t    left: 0;\n\t\t\t    bottom: 0;\n\t\t\t    width: 100%;\n\t\t\t    color: white;\n\t\t\t    text-align: center;\n\t\t\t}\n\t\t</style></head>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<head><script src=\"/static/d3.min.js\"></script><script src=\"/static/d3.geo.projection.min.js\"></script><script src=\"/static/celestial.min.js\"></script><script src=\"/static/tone.min.js\"></script><script src=\"/static/space_sound.js\"></script><script src=\"/static/space_ambience.js\"></script><link rel=\"stylesheet\" type=\"text/css\" href=\"/static/celestial.css\"><style>\n\t\t\tBody {\n\t\t\t    background-color: black;\n\t\t\t}\n\t\t\t.footer {\n\t\t\t    position: fixed;\n\t\t\t    left: 0;\n\t\t\t    bottom: 0;\n\t\t\t    width: 100%;\n\t\t\t    color: white;\n\t\t\t    text-align: center;\n\t\t\t}\n\t\t</style></head>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -91,7 +91,7 @@ func home() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div style=\"overflow:hidden;\"><div id=\"celestial-map\"></div></div><div id=\"celestial-form\"></div><button id=\"play-button\" onclick=\"playNote()\">Play</button><script id=\"websocket-script\" src=\"/static/show_alerts.js\"></script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div style=\"overflow:hidden;\"><div id=\"celestial-map\"></div></div><div id=\"celestial-form\"></div><script id=\"websocket-script\" src=\"/static/show_alerts.js\"></script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

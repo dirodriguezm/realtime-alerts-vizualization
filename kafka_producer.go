@@ -53,7 +53,7 @@ func produce(kafkaBrokers string) {
 
 	// Produce messages to topic (asynchronously)
 	topic := "ztf_alerts"
-	for _, alert := range alerts {
+	for i, alert := range alerts {
 		marshalled, err := avro.Marshal(avroSchema, alert)
 		if err != nil {
 			panic(fmt.Errorf("Failed to marshal alert: %w", err))
@@ -62,7 +62,13 @@ func produce(kafkaBrokers string) {
 			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 			Value:          marshalled,
 		}, nil)
-		time.Sleep(2 * time.Second)
+
+		// sleep between 0 and 1000 millisecond
+		time.Sleep(time.Duration(gofakeit.Number(0, 1000)) * time.Millisecond)
+		// after 20 messages, sleep for 2 to 5 seconds
+		if i%20 == 0 {
+			time.Sleep(time.Duration(gofakeit.Number(1, 5)) * time.Second)
+		}
 	}
 
 	// Wait for message deliveries before shutting down

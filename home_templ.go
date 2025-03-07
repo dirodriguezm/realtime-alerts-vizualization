@@ -29,7 +29,7 @@ func head() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<head><script src=\"/static/d3.min.js\"></script><script src=\"/static/d3.geo.projection.min.js\"></script><script src=\"/static/celestial.min.js\"></script><link rel=\"stylesheet\" type=\"text/css\" href=\"/static/celestial.css\"><style>\n\t\t\tBody {\n\t\t\t    background-color: black;\n\t\t\t}\n\t\t\t.footer {\n\t\t\t    position: fixed;\n\t\t\t    left: 0;\n\t\t\t    bottom: 0;\n\t\t\t    width: 100%;\n\t\t\t    color: white;\n\t\t\t    text-align: center;\n\t\t\t}\n\t\t</style></head>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<head><script src=\"/static/d3.min.js\"></script><script src=\"/static/d3.geo.projection.min.js\"></script><script src=\"/static/celestial.min.js\"></script><script src=\"http://unpkg.com/tone\"></script><script src=\"/static/space_sound.js\"></script><script src=\"/static/space_ambience.js\"></script><link rel=\"stylesheet\" type=\"text/css\" href=\"/static/celestial.css\"><style>\n\t\t\tBody {\n\t\t\t    background-color: black;\n\t\t\t}\n\t\t\t.footer {\n\t\t\t    position: fixed;\n\t\t\t    left: 0;\n\t\t\t    bottom: 0;\n\t\t\t    width: 100%;\n\t\t\t    color: white;\n\t\t\t    text-align: center;\n\t\t\t}\n\t\t</style></head>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -91,15 +91,11 @@ func home() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div style=\"overflow:hidden;\"><div id=\"celestial-map\"></div></div><div id=\"celestial-form\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div style=\"overflow:hidden;\"><div id=\"celestial-map\"></div></div><div id=\"celestial-form\"></div><button id=\"play-button\" onclick=\"playNote()\">Play</button><script id=\"websocket-script\" src=\"/static/show_alerts.js\"></script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = footer().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<script id=\"websocket-script\">\n\t  const socket = new WebSocket(\"ws://localhost:8080/ws\");\n\t  const pointStyle = {\n\t      stroke: \"rgba(255, 0, 0, 1)\",\n\t      fill: \"rgba(255, 0, 0, 0.8)\"\n\t  }\n\t  var config = {\n\t    form: false,\n\t    datapath: \"/static/data/\",\n\t    center: [0, 0, 0],\n\t    constellations: {\n\t      names: false,\n\t      lines: false,\n\t    },\n\t    dsos: {\n\t      show: false,\n\t    },\n\t  };\n\t  Celestial.display(config);\n\n\t  let dynamicPoints = {\n\t    type: \"FeatureCollection\",\n\t    features: []\n\t  };\n\n\t  Celestial.add({\n\t    type: \"point\",\n\t    callback: function() {\n\t\tif (error) return console.warn(error);\n\t\tconsole.log(\"Add callback initiated\");\n\t    },\n\t    redraw: function() {\n\t\tdynamicPoints.features.forEach(function(point) {\n\t\t\tif (Celestial.clip(point.geometry.coordinates)) {\n\t\t\t  // Get point coordinates\n\t\t\t  var pt = Celestial.mapProjection(point.geometry.coordinates);\n\t\t\t  // Object radius in pixels\n\t\t\t  var r = Math.pow(parseInt(point.properties.dim || 5) * 0.5, 0.5);\n\t\t\t  // Draw on canvas\n\t\t\t  Celestial.setStyle(pointStyle);\n\t\t\t  Celestial.context.beginPath();\n\t\t\t  Celestial.context.arc(pt[0], pt[1], r, 0, 2 * Math.PI);\n\t\t\t  Celestial.context.closePath();\n\t\t\t  Celestial.context.stroke();\n\t\t\t  Celestial.context.fill();\n\t\t\t}\n\t        });\n\t    },\n\t  });\n\n\t  socket.addEventListener(\"message\", function (event) {\n\t    const data = JSON.parse(event.data);\n\t    dynamicPoints.features = dynamicPoints.features.concat(data);\n\t    let len = dynamicPoints.features.length;\n\t    if (len > 100) {\n\t      dynamicPoints.features = dynamicPoints.features.slice(len - 100, len);\n\t    }\n\t    Celestial.redraw();\n\t  });\n\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

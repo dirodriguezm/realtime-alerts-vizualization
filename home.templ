@@ -5,6 +5,9 @@ templ head() {
 		<script src="/static/d3.min.js"></script>
 		<script src="/static/d3.geo.projection.min.js"></script>
 		<script src="/static/celestial.min.js"></script>
+		<script src="http://unpkg.com/tone"></script>
+		<script src="/static/space_sound.js"></script>
+		<script src="/static/space_ambience.js"></script>
 		<link rel="stylesheet" type="text/css" href="/static/celestial.css"/>
 		<style>
 			Body {
@@ -35,66 +38,7 @@ templ home() {
 		<div id="celestial-map"></div>
 	</div>
 	<div id="celestial-form"></div>
+	<button id="play-button" onclick="playNote()">Play</button>
+	<script id="websocket-script" src="/static/show_alerts.js"></script>
 	@footer()
-	<script id="websocket-script">
-	  const socket = new WebSocket("ws://localhost:8080/ws");
-	  const pointStyle = {
-	      stroke: "rgba(255, 0, 0, 1)",
-	      fill: "rgba(255, 0, 0, 0.8)"
-	  }
-	  var config = {
-	    form: false,
-	    datapath: "/static/data/",
-	    center: [0, 0, 0],
-	    constellations: {
-	      names: false,
-	      lines: false,
-	    },
-	    dsos: {
-	      show: false,
-	    },
-	  };
-	  Celestial.display(config);
-
-	  let dynamicPoints = {
-	    type: "FeatureCollection",
-	    features: []
-	  };
-
-	  Celestial.add({
-	    type: "point",
-	    callback: function() {
-		if (error) return console.warn(error);
-		console.log("Add callback initiated");
-	    },
-	    redraw: function() {
-		dynamicPoints.features.forEach(function(point) {
-			if (Celestial.clip(point.geometry.coordinates)) {
-			  // Get point coordinates
-			  var pt = Celestial.mapProjection(point.geometry.coordinates);
-			  // Object radius in pixels
-			  var r = Math.pow(parseInt(point.properties.dim || 5) * 0.5, 0.5);
-			  // Draw on canvas
-			  Celestial.setStyle(pointStyle);
-			  Celestial.context.beginPath();
-			  Celestial.context.arc(pt[0], pt[1], r, 0, 2 * Math.PI);
-			  Celestial.context.closePath();
-			  Celestial.context.stroke();
-			  Celestial.context.fill();
-			}
-	        });
-	    },
-	  });
-
-	  socket.addEventListener("message", function (event) {
-	    const data = JSON.parse(event.data);
-	    dynamicPoints.features = dynamicPoints.features.concat(data);
-	    let len = dynamicPoints.features.length;
-	    if (len > 100) {
-	      dynamicPoints.features = dynamicPoints.features.slice(len - 100, len);
-	    }
-	    Celestial.redraw();
-	  });
-
-	</script>
 }

@@ -414,3 +414,19 @@ type ZtfAlert struct {
 	CutoutTemplate   *ZtfAlertCutout         `avro:"cutoutTemplate" json:"cutout_template"`
 	CutoutDifference *ZtfAlertCutout         `avro:"cutoutDifference" json:"cutout_difference"`
 }
+
+// Probabilities is a generated struct.
+type Probabilities struct {
+	Sn       float32 `avro:"SN" json:"sn"`
+	Agn      float32 `avro:"AGN" json:"agn"`
+	Vs       float32 `avro:"VS" json:"vs"`
+	Asteroid float32 `avro:"asteroid" json:"asteroid"`
+	Bogus    float32 `avro:"bogus" json:"bogus"`
+}
+
+// Early Classification.
+type StampProbabilities struct {
+	ObjectID      string        `avro:"objectId" json:"object_id"`
+	Candid        int64         `avro:"candid" json:"candid"`
+	Probabilities Probabilities `avro:"probabilities" json:"probabilities"`
+}

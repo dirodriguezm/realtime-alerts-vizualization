@@ -1,4 +1,10 @@
-const socket = new WebSocket("/ws");
+let groupId = localStorage.getItem("groupId")
+if (groupId === null) {
+	groupId = self.crypto.randomUUID();
+	localStorage.setItem("groupId", `real-time-alerts-${groupId}`)
+}
+const socket = new WebSocket(`/ws?groupId=${groupId}`);
+
 const pointStyle = {
 	stroke: "rgba(255, 0, 0, 1)",
 	fill: "rgba(255, 0, 0, 0.8)"

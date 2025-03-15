@@ -5,36 +5,50 @@ import (
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
-	"github.com/google/uuid"
 	"github.com/hamba/avro/v2"
 )
 
-func consume(ch chan ZtfAlert, kafkaBrokers string) {
+func NewConsumer(servers, groupId, topic string, username, password *string) *kafka.Consumer {
+	config := &kafka.ConfigMap{
+		"bootstrap.servers":  servers,
+		"group.id":           groupId,
+		"auto.offset.reset":  "earliest",
+		"enable.auto.commit": "false",
+	}
 
-	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": kafkaBrokers,
-		"group.id":          uuid.New().String(),
-		"auto.offset.reset": "earliest",
-	})
+	if username != nil && password != nil {
+		slog.Info("Using SASL authentication")
+		config.SetKey("sasl.mechanisms", "SCRAM-SHA-512")
+		config.SetKey("security.protocol", "SASL_SSL")
+		config.SetKey("sasl.username", *username)
+		config.SetKey("sasl.password", *password)
+	}
+
+	c, err := kafka.NewConsumer(config)
+	if err != nil {
+		panic(err)
+	}
+
+	err = c.SubscribeTopics([]string{topic}, nil)
 
 	if err != nil {
 		panic(err)
 	}
 
-	err = c.SubscribeTopics([]string{"ztf_alerts"}, nil)
+	slog.Info("Created connection to kafka", "consumer", c)
 
-	if err != nil {
-		panic(err)
-	}
+	return c
+}
 
+func consume(ch chan StampProbabilities, c *kafka.Consumer) {
 	// A signal handler or similar could be used to set this to false to break the loop.
 	run := true
 
 	for run {
 		msg, err := c.ReadMessage(time.Second)
 		if err == nil {
-			alert := ZtfAlert{}
-			avroSchema, err := parseSchema()
+			alert := StampProbabilities{}
+			avroSchema, err := ParseStampClassifierSchema()
 			if err != nil {
 				slog.Error("Failed to parse schema", "error", err)
 				break
@@ -47,6 +61,10 @@ func consume(ch chan ZtfAlert, kafkaBrokers string) {
 			}
 
 			ch <- alert
+			_, commitErr := c.Commit()
+			if commitErr != nil {
+				slog.Error("Failed to commit message", "error", err)
+			}
 		} else if !err.(kafka.Error).IsTimeout() {
 			// The client will automatically try to recover from all errors.
 			// Timeout is not considered an error because it is raised by

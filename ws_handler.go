@@ -2,6 +2,7 @@ package main
 
 import (
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,8 +17,14 @@ var upgrader = websocket.Upgrader{
 // wsHandler is a handler for the WebSocket endpoint
 // It reads alerts from Kafka and sends them to the client
 // It also sends pings to the client to keep the connection alive
-func wsHandler(kafkaBrokers string) gin.HandlerFunc {
+func wsHandler(kafkaBrokers, topic string, repo ObjectRepository, username, password *string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		groupId := c.Query("groupId")
+		if groupId == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "groupId not found"})
+			return
+		}
+
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			c.Error(err)
@@ -37,31 +44,32 @@ func wsHandler(kafkaBrokers string) gin.HandlerFunc {
 		go readLoop(conn)
 
 		// Start the Kafka consumer
-		kafkaChannel := make(chan ZtfAlert)
-		go consume(kafkaChannel, kafkaBrokers)
+		kafkaChannel := make(chan StampProbabilities)
+		consumer := NewConsumer(kafkaBrokers, groupId, topic, username, password)
+		go consume(kafkaChannel, consumer)
 
 		// Main loop for sending data and pings
 		pingTicker := time.NewTicker(30 * time.Second)
 		defer pingTicker.Stop()
-		mainLoop(conn, kafkaChannel, pingTicker)
+		mainLoop(conn, kafkaChannel, pingTicker, repo)
 	}
 }
 
 // parseAlert converts a ZtfAlert to a GeoJSON feature used by d3-celestial
-func parseAlert(alert ZtfAlert) gin.H {
+func parseAlert(alert StampProbabilities, object Object) (gin.H, error) {
 	return gin.H{
 		"type": "Feature",
 		"id":   alert.Candid,
 		"geometry": gin.H{
 			"type":        "Point",
-			"coordinates": []float64{alert.Candidate.Ra, alert.Candidate.Dec},
+			"coordinates": []float64{object.Meanra, object.Meandec},
 		},
 		"properties": gin.H{
 			"name": alert.Candid,
-			"dim":  alert.Candidate.Magpsf,
+			"dim":  object.G_r_mean,
 			"type": "snr",
 		},
-	}
+	}, nil
 }
 
 // readLoop reads control frames from the client
@@ -87,12 +95,22 @@ func readLoop(conn *websocket.Conn) {
 // For each incoming alert, it sends the alert to the client
 // Every 30 seconds, it sends a ping to the client
 // If the client does not respond to the ping, the connection will be closed
-func mainLoop(conn *websocket.Conn, kafkaChannel chan ZtfAlert, pingTicker *time.Ticker) {
+func mainLoop(conn *websocket.Conn, kafkaChannel chan StampProbabilities, pingTicker *time.Ticker, repo ObjectRepository) {
 	for {
 		select {
 		case alert := <-kafkaChannel:
+			object, err := getObject(alert.ObjectID, repo)
+			if err != nil {
+				slog.Error("Error getting object", "error", err)
+				continue
+			}
 			// Send data
-			if err := conn.WriteJSON(parseAlert(alert)); err != nil {
+			data, err := parseAlert(alert, object)
+			if err != nil {
+				slog.Error("Error parsing alert", "error", err)
+				continue
+			}
+			if err := conn.WriteJSON(data); err != nil {
 				slog.Error("Write error", "error", err)
 				return
 			}
@@ -120,4 +138,12 @@ func setPongHandler(conn *websocket.Conn) {
 		slog.Debug("Received pong from client")
 		return nil
 	})
+}
+
+func getObject(oid string, repo ObjectRepository) (Object, error) {
+	object, err := repo.GetObject(oid)
+	if err != nil {
+		return Object{}, err
+	}
+	return object, nil
 }
